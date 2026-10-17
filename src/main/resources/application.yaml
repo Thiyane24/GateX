@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8082
 
 spring:
   application:
@@ -11,30 +11,18 @@ spring:
 
   cloud:
     gateway:
-      default-filters:
-        # FR-3: Trace ID Injection
-        - AddRequestHeader=X-Correlation-Id,
-        - AddResponseHeader=X-Correlation-Id,
-
       routes:
         # FR-1: User Service Routing
         - id: user_service_route
-          uri: http://localhost:8081
+          uri: https://userservicejava-53cad2478244.herokuapp.com/
           predicates:
             - Path=/api/users/**
           filters:
             - StripPrefix=1
 
-        # FR-1: Weather Service (Query Parameters)
-        - id: weather_service_route
-          uri: http://api.weatherapi.com
-          predicates:
-            - Path=/api/weather
-            - Method=GET
-
         # Resiliency: Slow Service (Timeout Tester)
         - id: slow_service_route
-          uri: http://localhost:8083
+          uri: https://reportservicejava-607c9f591a89.herokuapp.com/
           predicates:
             - Path=/api/reports/**
           metadata:
