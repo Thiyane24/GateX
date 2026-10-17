@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: GateX
+
+  threads:
+    virtual:
+      enabled: true
+
+  cloud:
+    gateway:
+      default-filters:
+        # FR-3: Trace ID Injection
+        - AddRequestHeader=X-Correlation-Id,
+        - AddResponseHeader=X-Correlation-Id,
+
+      routes:
+        # FR-1: User Service Routing
+        - id: user_service_route
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=1
+
+        # FR-1: Weather Service (Query Parameters)
+        - id: weather_service_route
+          uri: http://api.weatherapi.com
+          predicates:
+            - Path=/api/weather
+            - Method=GET
+
+        # Resiliency: Slow Service (Timeout Tester)
+        - id: slow_service_route
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/reports/**
+          metadata:
+            response-timeout: 3000
+            connect-timeout: 3000
+
+# FR-2: Global Request Logging
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE
+    reactor.netty.http.server: DEBUG
